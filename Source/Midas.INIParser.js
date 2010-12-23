@@ -2,13 +2,13 @@
 ---
 description: An extensible Mootools object container bridging to a pureJS SAX parser
 
-license: MIT-style + LGPL
+license: MIT-style and LGPL
 
 authors:
 - Abbey Hawk Sparrow
 
 requires:
-- Class
+    core/1.2.4: '*'
 
 provides: [Midas.INIParser]
 

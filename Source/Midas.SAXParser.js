@@ -8,7 +8,7 @@ authors:
 - Abbey Hawk Sparrow
 
 requires:
-- Class
+    core/1.2.4: '*'
 
 provides: [Midas.XMLParser]
 
