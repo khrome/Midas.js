@@ -2,7 +2,7 @@
 ---
 description: An extensible Mootools object container bridging to a pureJS SAX parser
 
-license: MIT-style and LGPL
+license: MIT-style
 
 authors:
 - Abbey Hawk Sparrow
