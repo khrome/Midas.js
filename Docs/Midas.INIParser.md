@@ -6,7 +6,7 @@ A parser for INI files
 How to use
 ----------
 
-This just initialize the parser and call parse on the data in question.
+This just initializes the parser and call parse on the data in question.
 
 var iniParser = new Midas.INIParser();
 iniParser.parse(data);

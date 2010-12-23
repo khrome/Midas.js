@@ -6,7 +6,7 @@ A .properties parser
 How to use
 ----------
 
-This just initialize the parser and call parse on the data in question.
+This just initializes the parser and call parse on the data in question.
 
 var propsParser = new Midas.PropertiesParser();
 propsParser.parse(data);
