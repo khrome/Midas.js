@@ -31,7 +31,7 @@ To use the .properties parser just initialize the parser and call parse on the d
     var propsParser = new Midas.PropertiesParser();
     propsParser.parse(data);
 
-or more likely as part of an AJAX call:
+or more likely as part of an AJAX call
 
     var propsParser = new Midas.PropertiesParser();
     var myRequest = new Request({
@@ -46,7 +46,7 @@ And using the INI parser is much the same
     var iniParser = new Midas.INIParser();
     iniParser.parse(data);
 
-or more likely as part of an AJAX call:
+or more likely as part of an AJAX call
 
     var iniParser = new Midas.INIParser();
     var myRequest = new Request({
@@ -58,4 +58,4 @@ or more likely as part of an AJAX call:
 
 and that's about it. enjoy.
 
--Abbey Hawk Sparrow
+Abbey Hawk Sparrow
