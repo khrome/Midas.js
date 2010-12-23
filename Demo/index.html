@@ -1,0 +1,56 @@
+<html>
+    <head>
+        <title>Midas Parser Demo Page</title>
+        <script type="text/javascript" src="mootools-core-1.3-full-nocompat.js"></script>
+        <script type="text/javascript" src="../Source/Midas.INIParser.js"></script>
+        <script type="text/javascript" src="../Source/Midas.SAXParser.js"></script>
+        <script type="text/javascript" src="../Source/Midas.PropertiesParser.js"></script>
+    </head>
+    <body>
+        <script>
+            var iniParser = new Midas.INIParser();
+            var myRequest = new Request({
+                url: 'test.ini',
+                onSuccess: function(data){
+                    console.log('Parsed an INI');
+                    console.log(iniParser.parse(data));
+                    document.id('output').innerHTML += '<hr/><pre>'+data+'</pre>';
+                }
+            }).send();
+        </script>
+        <script>
+            var propsParser = new Midas.PropertiesParser();
+            var myRequest = new Request({
+                url: 'test.properties',
+                onSuccess: function(data){
+                    console.log('Parsed a Properties file');
+                    console.log(propsParser.parse(data));
+                    document.id('output').innerHTML += '<hr/><pre>'+data+'</pre>';
+                }
+            }).send();
+        </script>
+        <script>
+            var SampleSAXParser = new Class({
+                Extends : Midas.SAXParser,
+                open : function(name, attrs){ // tag open
+                    console.log([name, attrs]);
+                },
+                content : function(text){ /* handle text */ },
+                close : function(name){ /*tag close*/ },
+            });
+            var mySAXParser = new SampleSAXParser();
+            var myRequest = new Request({
+                url: 'test.xml',
+                onSuccess: function(data) {
+                    console.log('Parsed an XML file');
+                    mySAXParser.parse(data);
+                    document.id('output').innerHTML += '<hr/><pre>'+data.replace(/</g, '&lt;').replace(/>/g, '&gt;')+'</pre>';
+                }
+            }).send();
+        </script>
+        <h1>Midas Parsers: SAX XML, Properties and INI</h1>
+        <h3>Dec 2010, Abbey Hawk Sparrow</h3>
+        <span style="color:red">Check the console for output</span>
+        <div id="output"></div>
+    </body>
+</html>
