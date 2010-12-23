@@ -11,7 +11,7 @@ requires:
     core/1.2.4: '*'
 
 provides: [Midas.XMLParser]
-
+...
 */
 if(!Midas) var Midas = {};
 Midas.SAXParser = new Class({

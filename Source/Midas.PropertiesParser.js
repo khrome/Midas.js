@@ -11,7 +11,7 @@ requires:
     core/1.2.4: '*'
 
 provides: [Midas.Properties,Midas.PropertiesParser]
-
+...
 */
 if(!Midas) var Midas = {};
 Midas.Properties = new Class({

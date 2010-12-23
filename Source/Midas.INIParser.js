@@ -11,7 +11,7 @@ requires:
     core/1.2.4: '*'
 
 provides: [Midas.INIParser]
-
+...
 */
 if(!Midas) var Midas = {};
 Midas.INIParser = new Class({
