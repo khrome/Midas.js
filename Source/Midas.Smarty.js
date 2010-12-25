@@ -1,3 +1,18 @@
+/*
+---
+description: An extensible Smarty Parser in Mootools
+
+license: MIT-style
+
+authors:
+- Abbey Hawk Sparrow
+
+requires:
+    core/1.2.4: '*'
+
+provides: [Midas.Smarty]
+...
+*/
 if(!Midas) var Midas = {};
 Midas.Smarty = new Class({
     //I am just going to do this my own way, my attempt at doing Smarty the way the smarty team does it left me wanting for death
