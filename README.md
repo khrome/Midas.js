@@ -25,6 +25,25 @@ the most simple case of this is
     
     var myParser = SampleSAXParser();
     myParser.parse(data);
+    
+Smarty is a very common templating language in PHP, much reviled for it's percieved poor performance and loved for it's ability to divorce logic and presentation. But this walled garden for designers has been very much interrupted by client logic and asynchronous requests. I've been maintaining a recursive smarty system for over a year now with the goal of eventually pushing the template rendering client side, thus being able to render a whole page or just a 'panel' (subtemplate) or even just refresh panels (poll the server for new data, then redisplay that using the already fetched template). This allows the best of both worlds, designers can still work with simple HTML templates but without crippling our flexibility in JS on the client, all still retaining the ability to render serverside for old clients, non JS browsers, or any other need you can think of.
+
+The first step towards this utopian dream is a Smarty port I can later extend. It's currently only working with a single level of macro nesting and only really supports values, literal blocks, if and foreach but remains useful, nonetheless. So in the name of Christmas, I'm releasing it!
+
+Use it like this
+
+    var smartyParser = new Midas.Smarty();
+    smartyParser.assign('title_text', 'Test!');
+    smartyParser.assign('body_html', myRenderedBody);
+    smartyParser.assign('table_items', ['checkered', 'argyle', 'houndstooth', 'paisley']);
+    var myRequest = new Request({
+        url: 'test.tpl',
+        onSuccess: function(data){
+            smartyParser.fetch(data)
+        }
+    }).send();
+    
+Don't get too crazy with this one just yet...
 
 To use the .properties parser just initialize the parser and call parse on the data in question.
 

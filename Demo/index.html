@@ -5,6 +5,7 @@
         <script type="text/javascript" src="../Source/Midas.INIParser.js"></script>
         <script type="text/javascript" src="../Source/Midas.SAXParser.js"></script>
         <script type="text/javascript" src="../Source/Midas.PropertiesParser.js"></script>
+        <script type="text/javascript" src="../Source/Midas.Smarty.js"></script>
     </head>
     <body>
         <script>
@@ -48,9 +49,31 @@
                 }
             }).send();
         </script>
-        <h1>Midas Parsers: SAX XML, Properties and INI</h1>
+        <script>
+            var smartyParser = new Midas.Smarty();
+            smartyParser.assign('title_text', 'Test!');
+            smartyParser.assign('body_html', '<b>Argh!</b>');
+            smartyParser.assign('table_items', ['checkered', 'argyle', 'houndstooth', 'paisley']);
+            var myRequest = new Request({
+                url: 'test.tpl',
+                onSuccess: function(data){
+                    console.log('Parsed a Smarty Template');
+                    document.id('output').innerHTML += '<hr/>Template<br/><pre>'+data.replace(/</g, '&lt;').replace(/>/g, '&gt;')+'</pre>';
+                    document.id('output').innerHTML += 'Parsed:<br/><pre>'+smartyParser.fetch(data).replace(/</g, '&lt;').replace(/>/g, '&gt;')+'</pre>';
+                    var changes = "\
+                        smartyParser.assign('something', true);<br/>\
+                        smartyParser.assign('table_items', ['tabby', 'siamese', 'tortoiseshell', 'calico', 'monorail']);<br/>\
+                    ";
+                    smartyParser.assign('something', true);
+                    smartyParser.assign('table_items', ['tabby', 'siamese', 'tortoiseshell', 'calico', 'monorail']);
+                    document.id('output').innerHTML += 'Changed:<br/>'+changes+'Parsed:<br/><pre>'+smartyParser.fetch(data).replace(/</g, '&lt;').replace(/>/g, '&gt;')+'</pre>';
+                }
+            }).send();
+        </script>
+        <h1>Midas Parsers: SAX XML, Properties, INI and Smarty Parser<sup>*<sup></h1>
         <h3>Dec 2010, Abbey Hawk Sparrow</h3>
-        <span style="color:red">Check the console for output</span>
+        <h4><b>*</b> - Smarty Parser currently alpha quality, but stable</h4>
+        <span style="color:red">Check the console for data output(XML, properties and INI)</span>
         <div id="output"></div>
     </body>
 </html>
