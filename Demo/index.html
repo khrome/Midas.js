@@ -60,6 +60,7 @@
                     console.log('Parsed a Smarty Template');
                     document.id('output').innerHTML += '<hr/>Template<br/><pre>'+data.replace(/</g, '&lt;').replace(/>/g, '&gt;')+'</pre>';
                     document.id('output').innerHTML += 'Parsed:<br/><pre>'+smartyParser.fetch(data).replace(/</g, '&lt;').replace(/>/g, '&gt;')+'</pre>';
+                    var dom1 = smartyParser.fetch(data).toDOM();
                     var changes = "\
                         smartyParser.assign('something', true);<br/>\
                         smartyParser.assign('table_items', ['tabby', 'siamese', 'tortoiseshell', 'calico', 'monorail']);<br/>\
@@ -67,6 +68,9 @@
                     smartyParser.assign('something', true);
                     smartyParser.assign('table_items', ['tabby', 'siamese', 'tortoiseshell', 'calico', 'monorail']);
                     document.id('output').innerHTML += 'Changed:<br/>'+changes+'Parsed:<br/><pre>'+smartyParser.fetch(data).replace(/</g, '&lt;').replace(/>/g, '&gt;')+'</pre>';
+                    var dom2 = smartyParser.fetch(data).toDOM();
+                    console.log(['DOM', dom2]);
+                    dom1.diff(dom2);
                 }
             }).send();
         </script>

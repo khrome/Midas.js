@@ -8,29 +8,42 @@ The Midas.js library is a set of parsers for various formats in JS(currently XML
 How to use
 ----------
 
-Existing XML parsing techniques use DOM injection, which is very limited, can suppress nodes, error or produce unexpected results. So I ran across David Joham and Scott Severtson old JS parser on sourceforge, and while it's interface is thorough, it's a little arcane to use. So I wrapped it in a more modern MooTools interface, allowing you to just extend the 'open', 'close' and 'content' functions to build your parser. This should make it pretty simple to use.
+Existing XML parsing techniques use DOM injection, which is very limited, can suppress nodes, error or produce unexpected results. So I ran across David Joham and Scott Severtson's old JS parser on sourceforge, and while it's interface is thorough, it's a little arcane. So I wrapped it in a more modern MooTools interface, allowing you to just extend the 'open', 'close' and 'content' functions to build your parser. This should make it pretty simple to use.
 
-the most simple case of this is
+So let's build a *real* toDOM function... one that parses the full HTML document and constructs a complete DOM tree independent of the window's document, so it's not subject to the quirks of legal tags at the point of injection.
 
-    var SampleSAXParser = new Class({
-        Extends : Midas.SAXParser,
-        open : function(name, attrs){ // tag open
-            console.log([name, attrs]);
-        },
-        content : function(text){ 
-            console.log(text);
-        },
-        close : function(name){
-            console.log(['close', name]);
-        },
+    String.implement({
+        toDOM: function(mode) {
+            var HTMLParser = new Class({
+                Extends : Midas.SAXParser,
+                stack : [],
+                root : false,
+                open : function(name, attrs){ // tag open
+                    var node = new Element(name, attrs);
+                    if(this.stack.length > 0) this.stack.getLast().appendChild(node);
+                    this.stack.push(node);
+                },
+                content : function(text){
+                    if(this.stack.length > 0) this.stack.getLast().appendText(text);
+                },
+                close : function(name){
+                    this.root = this.stack.pop();
+                },
+                parse : function(html){
+                    this.parent(html);
+                    return this.root;
+                }
+            });
+            var pageParser = new HTMLParser();
+            return pageParser.parse(this);
+        }
     });
     
-    var myParser = SampleSAXParser();
-    myParser.parse(data);
+Not too bad, right? Now... let's take a crack at templating languages!
     
 Smarty is a very common templating language in PHP, much reviled for it's percieved poor performance and loved for it's ability to divorce logic and presentation. But this walled garden for designers has been very much interrupted by client logic and asynchronous requests. I've been maintaining a recursive smarty system for over a year now with the goal of eventually pushing the template rendering client side, thus being able to render a whole page or just a 'panel' (subtemplate) or even just refresh panels (poll the server for new data, then redisplay that using the already fetched template). This allows the best of both worlds, designers can still work with simple HTML templates but without crippling our flexibility in JS on the client, all still retaining the ability to render serverside for old clients, non JS browsers, or any other need you can think of.
 
-The first step towards this utopian dream is a Smarty port I can later extend. It's currently only working with a single level of macro nesting and only really supports values, literal blocks, if and foreach but remains useful, nonetheless. So in the name of Christmas, I'm releasing it!
+The first step towards this utopian dream is a Smarty port I can later extend. It currently only really supports values, literal blocks, if and foreach but remains useful, nonetheless. It's now been upgraded to support any amount of macro nesting (up to what the client can handle), so nest to your heart's content!
 
 Use it like this
 

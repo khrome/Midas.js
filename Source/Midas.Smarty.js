@@ -254,6 +254,30 @@ Midas.Smarty = new Class({
         }
         return result;
     },
+    nestBlocks : function(results, stack){
+        //seperate blocks (single level > multi level)
+        if(!results) return;
+        if(stack == undefined) stack = [];
+        var tag, last, blocks;
+        results.copy().each(function(item, index){
+            last = stack.getLast();
+            tag = (last)?last.tag.name:undefined;
+            blocks = (last)?last.blocks:results;
+            if(!item.blocks) item.blocks = [];
+            if(item.tag && this.blockTags.contains(item.tag.name)){
+                stack.push(item);
+            }
+            if(tag && item.tag && '/'+tag == item.tag.name){
+                this.nestBlocks(blocks.blocks, stack);
+                stack.pop();
+                blocks = (stack.getLast())?stack.getLast().blocks:results;
+            }
+            if(!blocks.contains(item)){
+                blocks.push(item)
+                results.erase(item);
+            }
+        }.bind(this));
+    },
     fetch : function(templateName){
         var template;
         if(templateName.indexOf("\n") == -1) template = this.getTemplate(this.template_directory + templateName);
@@ -267,27 +291,14 @@ Midas.Smarty = new Class({
                     break;
             }
         }.bind(this));
-        //seperate blocks (single level > multi level)
-        var stack = [];
-        var top;
-        results.copy().each(function(item, index){
-            if(!item.blocks) item.blocks = [];
-            if(stack.length == 0){
-                if(item.tag && this.blockLevelSmartyTags.contains(item.tag.name)) stack.push(item);
-            }else{
-                top = stack.getLast();
-                if(item.blockType == 'tag' && '/'+top.tag.name == item.tag.name) stack.pop();
-                else top.blocks.push(item);
-                results.erase(item);
-            }
-        }.bind(this));
+        this.nestBlocks(results);
         this.renderOutput(results);
         if(this.debug) this.output('['+templateName+']');
         buffer = Midas.SmartyLib.executeBlocks(results, this);
-        return buffer;
+        return buffer+'';
     },
     blockStack : [],
-    blockLevelSmartyTags : ['if', 'foreach'],
+    blockTags : ['if', 'foreach'],
     parseTags : function(block_list){
         block_list.each(function(item, index){
             switch(item.blockType){
@@ -427,9 +438,9 @@ Midas.SmartyLib = {
         return str;
     },
     evaluateSmartyPHPHybridBooleanExpression : function(expression, smartyInstance){
-        var pattern = /[Ii][Ff] +(\$[A-Za-z][A-Za-z0-9.]*)/s;
+        var pattern = /[Ii][Ff] +(\$[A-Za-z][A-Za-z0-9.]*) *$/s;
         var parts = expression.match(pattern);
-        if(parts.length > 0){
+        if(parts && parts.length > 0){
             return Midas.SmartyLib.evaluateSmartyPHPHybridVariable(parts[1].trim(), smartyInstance);
         }
         pattern = /[Ii][Ff](.*)(eq|ne|gt|lt|ge|le|==|>=|<=|<|>)(.*)/s;
@@ -554,6 +565,7 @@ Midas.SmartyLib = {
     },
     ifMacro: function(panelName, attributes, smartyInstance, block){
         var result = Midas.SmartyLib.evaluateSmartyPHPHybridBooleanExpression(block.content, smartyInstance);
+        console.log(['if', block.content, result])
         //prescan to make sure the else branch is there
         var hitElse = false;
         var item;
@@ -575,6 +587,7 @@ Midas.SmartyLib = {
         //do the actual rendering
         if(result) buffer = Midas.SmartyLib.executeBlocks(block.ifBlocks, smartyInstance);
         else buffer = Midas.SmartyLib.executeBlocks(block.elseBlocks, smartyInstance);
+        if(buffer == undefined) return '';
         return buffer;
     },
     generateUUID: function(){
@@ -715,7 +728,7 @@ Midas.SmartyLib = {
     }
 };
 
-// String extensions
+// Array extensions
 if(!Array.copy){
     Array.implement({
         copy : function() {
@@ -728,7 +741,7 @@ if(!Array.copy){
     });
 }
 
-
+// String extensions
 if(!String.startsWith){
     String.implement({
         startsWith : function(text) {
@@ -745,6 +758,17 @@ if(!String.endsWith){
     });
 }
 
+if(!String.reverse){
+    String.implement({
+        reverse : function(){
+            splitext = this.split("");
+            revertext = splitext.reverse();
+            reversed = revertext.join("");
+            return reversed;
+        }
+    });
+}
+
 if(!String.splitHonoringQuotes){
     String.implement({
         splitHonoringQuotes: function(delimiter, quotes) {
@@ -756,15 +780,15 @@ if(!String.splitHonoringQuotes){
                 if(inQuote){
                     if(this[lcv] == quote){
                         inQuote = false;
-                        results[results.length-1] += this[lcv];
-                        results[results.length] = '';
+                        //results[results.length-1] += this[lcv];
+                        //results[results.length] = '';
                     }else{
                         results[results.length-1] += this[lcv];
                     }
                 }else{
                     if(quotes.contains(this[lcv])){
                         quote = this[lcv];
-                        results[results.length-1] += this[lcv];
+                        //results[results.length-1] += this[lcv];
                         inQuote = true;
                     }else if(this[lcv] == delimiter){
                         results[results.length] = '';
@@ -778,14 +802,36 @@ if(!String.splitHonoringQuotes){
     });
 }
 
-if(!String.renderHTML){
+if(!String.toDOM){
     String.implement({
-        renderHTML: function(mode) {
-            if(!mode) mode = 'iframe';
+        toDOM: function(mode) {
+            if(!mode) mode = 'sax';
             var result = false;
             switch(mode){
                 case 'sax':
-                    throw('SAX parser not yet implemented');
+                    //we're going to parse the HTML and build our own DOM off the page
+                    var HTMLParser = new Class({
+                        Extends : Midas.SAXParser,
+                        stack : [],
+                        root : null,
+                        open : function(name, attrs){
+                            var node = new Element(name, attrs);
+                            if(this.stack.length > 0) this.stack.getLast().appendChild(node);
+                            this.stack.push(node);
+                        },
+                        content : function(text){
+                            if(this.stack.length > 0) this.stack.getLast().appendText(text);
+                        },
+                        close : function(name){
+                            this.root = this.stack.pop();
+                        },
+                        parse : function(html){
+                            this.parent(html);
+                            return this.root;
+                        }
+                    });
+                    var pageParser = new HTMLParser();
+                    return pageParser.parse(this);
                     break;
                 case 'iframe':
                     var myIFrame = new IFrame({
@@ -797,7 +843,6 @@ if(!String.renderHTML){
                     result = myIFrame.clone();
                     myIFrame.destroy();
                     break;
-                case 'dom':
                 case 'div':
                     var injector = new Element('div', {
                         'html': this,
@@ -813,5 +858,43 @@ if(!String.renderHTML){
             return result;
         }
         
+    });
+}
+
+if(!NodeList.prototype.each){
+    NodeList.prototype.each = function(callback){
+        for(index in this){
+            callback(this[index], index);
+        }
+    }
+}
+
+if(!Element.diff){
+    Element.implement({
+        diff : function(node){
+            console.log(['diff', this, node]);
+            this.childNodes.each(function(child, index){
+                console.log(['node comp', child.sameAs(node.childNodes[index])]);
+            });
+        }
+    });
+}
+
+if(!Element.sameAs){
+    Element.implement({
+        sameAs : function(node, recursive){
+            different = false;
+            if(this.nodeName != node.nodeName) different = true;
+            this.attributes.each(function(value, name){
+                if(node[name] != value) different = true;
+            });
+            if(recursive){
+                if(this.childNodes.length != node.childNodes.length) different = true;
+                else this.childNodes.each(function(child, index){
+                    if(!child.sameAs(node.childNodes[index])) different = true;
+                });
+            }
+            return !different;
+        }
     });
 }

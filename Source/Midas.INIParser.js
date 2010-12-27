@@ -1,6 +1,6 @@
 /*
 ---
-description: An extensible Mootools object container bridging to a pureJS SAX parser
+description: A MooTools INI loader
 
 license: MIT-style
 
