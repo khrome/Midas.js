@@ -438,12 +438,14 @@ Midas.SmartyLib = {
         return str;
     },
     evaluateSmartyPHPHybridBooleanExpression : function(expression, smartyInstance){
-        var pattern = /[Ii][Ff] +(\$[A-Za-z][A-Za-z0-9.]*) *$/s;
+        //var pattern = /[Ii][Ff] +(\$[A-Za-z][A-Za-z0-9.]*) *$/s;
+        var pattern = new RegExp('[Ii][Ff] +(\$[A-Za-z][A-Za-z0-9.]*) *$', 'm');
         var parts = expression.match(pattern);
         if(parts && parts.length > 0){
             return Midas.SmartyLib.evaluateSmartyPHPHybridVariable(parts[1].trim(), smartyInstance);
         }
-        pattern = /[Ii][Ff](.*)(eq|ne|gt|lt|ge|le|==|>=|<=|<|>)(.*)/s;
+        //pattern = /[Ii][Ff](.*)(eq|ne|gt|lt|ge|le|==|>=|<=|<|>)(.*)/s;
+        pattern = new RegExp('[Ii][Ff](.*)(eq|ne|gt|lt|ge|le|==|>=|<=|<|>)(.*)', 'm');
         parts = expression.match(pattern);
         if(parts && parts.length > 3){
         var varOne = Midas.SmartyLib.evaluateSmartyPHPHybridVariable(parts[1].trim(), smartyInstance);
