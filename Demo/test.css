@@ -1,0 +1,20 @@
+body{
+    text-align: center;
+    border: 0px;
+    margin: 20px;
+}
+
+#output{
+    width: 100%;
+    background-color: #CCCCCC;
+    font-size: 12px;
+    text-align: left;
+}
+
+span{
+    color : red;
+}
+
+pre{
+    padding: 40px;
+}
