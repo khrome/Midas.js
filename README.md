@@ -1,14 +1,96 @@
 Midas.js
 ===========
 
-The Midas.js library is a set of parsers for various formats in JS(currently XML, INI, .properties, CSS and Smarty). I hope they're useful to you.
+The Midas.js library is a set of parsers for various formats in JS(currently XML, INI, .properties, CSS, SASS SCSS and Smarty).
 
 ![Screenshot](http://patternweaver.com/Midas/Midas.js.png)
 
 How to use
 ----------
 
-I've long wanted to be able to just parse a CSS file and be able to apply it to the page, using the this parser and MooTools native selector engine, you can do just that!
+SASS SCSS offers many language features over CSS itself producing smaller, more maintainable files, but like everthing else... I'd like to push that work client side. So here's a parser/transformer for exactly that purpose.
+
+You can directly work with the SCSS yourself
+
+    var myRequest = new Request({
+        url: 'test.scss',
+        onSuccess: function(data){
+            var sassParser = new Midas.SCSSParser();
+            var css = sassParser.convertScssToCss(data);
+            //now we'll use the css object to directly apply the styles to DOM elements
+            var styleParser = new Midas.CSSParser();
+            styleParser.apply(data);
+        }
+    }).send();
+    
+or you can rely on the library to do the work for you, just make sure to include the Midas.SCSSParser in the head and include any scss style like:
+    
+    <style type="text/scss">
+        table.hl {
+          margin: 2em 0;
+          td.ln {
+            text-align: right;
+          }
+        }
+        
+        li {
+          font: {
+            family: serif;
+            weight: bold;
+            size: 1.2em;
+          }
+        }
+        
+        $blue: #3bbfce;
+        $margin: 16px;
+        
+        .content-navigation {
+          border-color: $blue;
+          color:
+            darken($blue, 9%);
+        }
+        
+        .border {
+          padding: $margin / 2;
+          margin: $margin / 2;
+          border-color: $blue;
+        }
+    </style>
+    
+And it'll get picked up, converted and injected:
+
+    <style type="text/css">
+        table.hl{
+           margin:2em 0;
+        }
+        table.hl td.ln{
+           text-align:right;
+        }
+        li{
+           font-family:serif;
+           font-weight:bold;
+           font-size:1.2em;
+        }
+        .content-navigation{
+           border-color:#3bbfce;
+           color:#35ADBB;
+        }
+        .border{
+           padding:8px;
+           margin:8px;
+           border-color:#3bbfce;
+        }
+    </style>
+    
+I tend to like SASS more in the client and although all of the support functions aren't yet implemented(only darken), They'll be along shortly and in the meantime, you can always extend it yourself:
+
+    Midas.SASSFunctions.myFunctionName = function(arg1, arg2){
+        //do work here
+    }
+    
+which will make it available during evaluation! Enjoy!
+
+I've also long wanted to be able to just parse a CSS file and be able to apply it to the page, using the this parser and MooTools native selector engine, you can do just that!
 
     var styleParser = new Midas.CSSParser();
     var myRequest = new Request({
