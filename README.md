@@ -1,7 +1,7 @@
 Midas.js
 ===========
 
-The Midas.js library is a set of parsers for various formats in JS(currently XML, INI, .properties and Smarty). I hope they're useful to you.
+The Midas.js library is a set of parsers for various formats in JS(currently XML, INI, .properties, CSS and Smarty). I hope they're useful to you.
 
 ![Screenshot](http://patternweaver.com/Midas/Midas.js.png)
 

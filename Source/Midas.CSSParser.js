@@ -32,6 +32,11 @@ Midas.CSSParser = new Class({
                 }
                 continue;
             }
+            if(ch == '/' && text[lcv+1] == '*'){
+                inComment = true;
+                lcv++;
+                continue;
+            }
             if(inStyle){
                 if(inPredicate){
                     if(ch == ';' || ch == '}'){
@@ -60,11 +65,6 @@ Midas.CSSParser = new Class({
                     }
                     
                 }
-                continue;
-            }
-            if(ch == '/' && text[lcv+1] == '*'){
-                inComment = true;
-                lcv++;
                 continue;
             }
             if(ch == '{'){

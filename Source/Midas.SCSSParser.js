@@ -9,8 +9,9 @@ authors:
 
 requires:
     core/1.2.4: '*'
+    Midas.CSSParser
 
-provides: [Midas.SASSParser]
+provides: [Midas.SCSSParser]
 ...
 */
 if(!Midas) var Midas = {};
@@ -27,6 +28,19 @@ Midas.SASSFunctions = {
         return '#'+colors[0].toString(16).toUpperCase()+colors[1].toString(16).toUpperCase()+colors[2].toString(16).toUpperCase();
     }
 };
+Midas.SCSS = function(){
+    window.addEvent('domready', function() {
+        var scssStyles = $$('head style[@type="text/scss"]');
+        scssStyles.each(function(style){
+            var sassParser = new Midas.SCSSParser();
+            var css = sassParser.convertScssToCss(style.innerText);
+            var convertedTag = new Element('style', {type: 'text/css'});
+            convertedTag.innerHTML = css;
+            convertedTag.inject(style, 'before');
+        });
+    });
+}
+Midas.SCSS();
 Midas.SCSSParser = new Class({
     parse: function(text){
         var inComment = false;
@@ -219,12 +233,15 @@ Midas.SCSSParser = new Class({
             }else if(node.directive){
                 if(node.directive.startsWith('@include ')){
                     var pieces = node.directive.match(/@include ([A-Za-z][A-Za-z0-9_-]*)(\(.*\))?/);
-                    var args = (pieces[2])? pieces[2].split(',') : [];
+                    var args = (pieces[2])? pieces[2].substring(1, pieces[2].length-1).split(',') : [];
                     args.each(function(value, index){
                         args[index] = value.trim();
                     });
                     var mixin;
                     if(mixin = this.mixin(pieces[1])){
+                        args.each(function(value, index){
+                            this.environment[mixin['_args'][index]] = value;
+                        }.bind(this));
                         this.convertScssNodesToCss(mixin.styles, (selector).trim(), results);
                     }
                 }
