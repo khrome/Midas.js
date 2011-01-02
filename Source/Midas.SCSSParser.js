@@ -8,8 +8,8 @@ authors:
 - Abbey Hawk Sparrow
 
 requires:
-    core/1.2.4: '*'
-    Midas.CSSParser
+    -core/1.2.4: '*'
+    -Midas.CSSParser
 
 provides: [Midas.SCSSParser]
 ...
