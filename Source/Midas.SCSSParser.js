@@ -15,6 +15,9 @@ provides: [Midas.SCSSParser]
 */
 if(!Midas) var Midas = {};
 Midas.SASSFunctions = {
+    hsl : function(hue, saturation, lightness){
+    
+    },
     darken : function(color, percent){
         if(percent.endsWith('%')) percent = percent.substring(0, percent.length-1);
         if(color.startsWith('#')) color = color.substring(1);
@@ -23,6 +26,18 @@ Midas.SASSFunctions = {
         colors[0] = Math.floor(colors[0] * ((100-percent)/100));
         colors[1] = Math.floor(colors[1] * ((100-percent)/100));
         colors[2] = Math.floor(colors[2] * ((100-percent)/100));
+        //console.log(colors);
+        return '#'+colors[0].toString(16).toUpperCase()+colors[1].toString(16).toUpperCase()+colors[2].toString(16).toUpperCase();
+    },
+    greyscale : function(color){
+        if(percent.endsWith('%')) percent = percent.substring(0, percent.length-1);
+        if(color.startsWith('#')) color = color.substring(1);
+        //console.log([color, percent]);
+        var colors = [parseInt("0x"+color.substring(0,2)), parseInt("0x"+color.substring(2,4)), parseInt("0x"+color.substring(4,6))];
+        var val = (colors[0]+colors[1]+colors[3] == 0)?0:(colors[0]+colors[1]+colors[3])/3
+        colors[0] = val;
+        colors[1] = val;
+        colors[2] = val;
         //console.log(colors);
         return '#'+colors[0].toString(16).toUpperCase()+colors[1].toString(16).toUpperCase()+colors[2].toString(16).toUpperCase();
     }
