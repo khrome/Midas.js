@@ -27,7 +27,9 @@ Midas.Smarty = new Class({
     caching : true,
     database : null,
     initialize : function(){
-        this.macroRegistry['panel'] = Midas.SmartyLib.renderPanel;
+        //this.macroRegistry['panel'] = Midas.SmartyLib.renderPanel;
+        this.macroRegistry['rdelim'] = function(panelName, attributes, smartyInstance, block){ return '}' };
+        this.macroRegistry['ldelim'] = function(panelName, attributes, smartyInstance, block){ return '{' };
         this.macroRegistry['foreach'] = function(panelName, attributes, smartyInstance, block){
             return Midas.SmartyLib.forMacro(block.tag, smartyInstance, block)
         };
@@ -121,13 +123,14 @@ Midas.Smarty = new Class({
     macro : function(name, attrs, block){
         //console.log(['MACRO', name]);
         //this.output(profile(attrs));
-        if(!attrs.get) attrs.get = function(){
-            var value = '';
+        if(!attrs.get) attrs.get = function(tagName){
+            var value = null;
             this.each(function(item, index){
-                if(item.name == 'name') value = item.value;
+                if(item.name == tagName) value = item.value;
             }.bind(this));
             return value;
         }
+        //console.log(this.macroRegistry[name]);
         if(this.macroRegistry[name]) return this.macroRegistry[name](attrs.get('name'), attrs, this, block);
         else return '<!-- '+name+' [Macro not found!] -->';
     },
@@ -278,7 +281,7 @@ Midas.Smarty = new Class({
             }
         }.bind(this));
     },
-    fetch : function(templateName){
+    fetch : function(templateName, callback){
         var template;
         if(templateName.indexOf("\n") == -1) template = this.getTemplate(this.template_directory + templateName);
         else template = templateName;
@@ -295,6 +298,7 @@ Midas.Smarty = new Class({
         this.renderOutput(results);
         if(this.debug) this.output('['+templateName+']');
         buffer = Midas.SmartyLib.executeBlocks(results, this);
+        if(callback) callback(buffer+'');
         return buffer+'';
     },
     blockStack : [],
@@ -313,6 +317,7 @@ Midas.Smarty = new Class({
         block_list.each(function(item, index){
             switch(item.blockType){
                 case 'tag':
+                    //console.log('attempting render of tag '+item.tag.name);
                     if(item.tag.name == 'value'){
                         item.output = Midas.SmartyLib.evaluateSmartyPHPHybridExpression(item.content, this);
                     }
@@ -555,19 +560,9 @@ Midas.SmartyLib = {
     convertConditionToJS: function(conditional){
         
     },
-    renderPanel: function(panelName, attributes, smartyInstance, block){
-        renderer = new Midas.Smarty();
-        renderer.template_directory = smartyInstance.template_directory;
-        renderer.wrapper_directory = smartyInstance.wrapper_directory;
-        renderer.config = smartyInstance.config;
-        var value = renderer.fetch(panelName+'.panel.tpl');
-        //var value = renderer.fetch(panelName+'.panel.tpl');
-        if(value !== null) return value;
-        else return '[Panel Missing('+panelName+'.panel.tpl'+')!]';
-    },
     ifMacro: function(panelName, attributes, smartyInstance, block){
         var result = Midas.SmartyLib.evaluateSmartyPHPHybridBooleanExpression(block.content, smartyInstance);
-        console.log(['if', block.content, result])
+        //console.log(['if', block.content, result])
         //prescan to make sure the else branch is there
         var hitElse = false;
         var item;
@@ -816,8 +811,20 @@ if(!String.toDOM){
                         Extends : Midas.SAXParser,
                         stack : [],
                         root : null,
+                        scripts : [],
                         open : function(name, attrs){
-                            var node = new Element(name, attrs);
+                            var node;
+                            if(name.indexOf(':') != -1){ //if this is one of FB's tags, we need to use innerHTML to get the correct tagName back out
+                                var attributes = '';
+                                for(key in attrs){
+                                    attributes += key + '="'+attrs[key]+'" ';
+                                }
+                                node = new Element('div');
+                                node.innerHTML = '<'+name+' '+attributes+'></'+name+'>';
+                                node = node.children[0];
+                            }else{
+                                node = new Element(name, attrs);
+                            }
                             if(this.stack.length > 0) this.stack.getLast().appendChild(node);
                             this.stack.push(node);
                         },
@@ -826,6 +833,7 @@ if(!String.toDOM){
                         },
                         close : function(name){
                             this.root = this.stack.pop();
+                            if(name.toLowerCase() == 'script') this.scripts.push();
                         },
                         parse : function(html){
                             this.parent(html);
