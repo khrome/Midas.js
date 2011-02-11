@@ -799,6 +799,43 @@ if(!String.splitHonoringQuotes){
     });
 }
 
+var XHTMLParser = new Class({
+    Extends : Midas.SAXParser,
+    stack : [],
+    root : null,
+    scripts : [],
+    open : function(name, attrs){
+        var node;
+        if(name.indexOf(':') != -1){ //if this is one of FB's tags, we need to use innerHTML to get the correct tagName back out
+            var attributes = '';
+            for(key in attrs){
+                attributes += key + '="'+attrs[key]+'" ';
+            }
+            node = new Element('div');
+            node.innerHTML = '<'+name+' '+attributes+'></'+name+'>';
+            node = node.children[0];
+        }else{
+            node = new Element(name, attrs);
+        }
+        if(this.stack.length > 0) this.stack.getLast().appendChild(node);
+        this.stack.push(node);
+    },
+    content : function(text){
+        if(this.stack.length > 0) this.stack.getLast().appendText(text);
+    },
+    close : function(name){
+        this.root = this.stack.pop();
+        if(name.toLowerCase() == 'script') this.scripts.push();
+    },
+    parse : function(html){
+        //wrap the script tag bodies with CDATA tags so our strict parser won't freak out
+        var exp = new RegExp('(<script\\b[^>]*>)([\\s\\S]*?)(<\\/script>)', 'igm');
+        html = html.replace(exp, '$1/*<![CDATA[*//*---->*/$2/*--*//*]]>*/$3');
+        this.parent(html);
+        return this.root;
+    }
+});
+
 if(!String.toDOM){
     String.implement({
         toDOM: function(mode) {
@@ -807,40 +844,7 @@ if(!String.toDOM){
             switch(mode){
                 case 'sax':
                     //we're going to parse the HTML and build our own DOM off the page
-                    var HTMLParser = new Class({
-                        Extends : Midas.SAXParser,
-                        stack : [],
-                        root : null,
-                        scripts : [],
-                        open : function(name, attrs){
-                            var node;
-                            if(name.indexOf(':') != -1){ //if this is one of FB's tags, we need to use innerHTML to get the correct tagName back out
-                                var attributes = '';
-                                for(key in attrs){
-                                    attributes += key + '="'+attrs[key]+'" ';
-                                }
-                                node = new Element('div');
-                                node.innerHTML = '<'+name+' '+attributes+'></'+name+'>';
-                                node = node.children[0];
-                            }else{
-                                node = new Element(name, attrs);
-                            }
-                            if(this.stack.length > 0) this.stack.getLast().appendChild(node);
-                            this.stack.push(node);
-                        },
-                        content : function(text){
-                            if(this.stack.length > 0) this.stack.getLast().appendText(text);
-                        },
-                        close : function(name){
-                            this.root = this.stack.pop();
-                            if(name.toLowerCase() == 'script') this.scripts.push();
-                        },
-                        parse : function(html){
-                            this.parent(html);
-                            return this.root;
-                        }
-                    });
-                    var pageParser = new HTMLParser();
+                    var pageParser = new XHTMLParser();
                     return pageParser.parse(this);
                     break;
                 case 'iframe':
