@@ -78,7 +78,7 @@ Midas.CSSParser = new Class({
     },
     apply : function(data){
         if(typeof data == 'string') data = this.parse(data);
-        console.log(data);
+        //console.log(data);
         data.each(function(definition){
             var elements = $$(definition.selector);
             elements.each(function(element){

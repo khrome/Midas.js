@@ -33,7 +33,7 @@ Midas.SAXParser = new Class({
     close: function(tagName){
     },
     error: function(exception){
-        console.log(['SAX Parse Error!', exception, exception.m_parser.m_xml.charAt(exception.m_parser.iP)+exception.m_parser.m_xml.charAt(exception.m_parser.iP+1)+exception.m_parser.m_xml.charAt(exception.m_parser.iP+2), exception.m_parser.m_xml]);
+        //console.log(['SAX Parse Error!', exception, exception.m_parser.m_xml.charAt(exception.m_parser.iP)+exception.m_parser.m_xml.charAt(exception.m_parser.iP+1)+exception.m_parser.m_xml.charAt(exception.m_parser.iP+2), exception.m_parser.m_xml]);
         throw('SAX Parse Error('+exception.m_strErrMsg+')');
     },
     parse: function(xml){

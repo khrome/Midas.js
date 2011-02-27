@@ -66,12 +66,14 @@ Midas.Smarty = new Class({
         while(keys.length > 0){
             nextIndex = keys.pop();
             expression += '[\''+nextIndex+'\']';
-            accessor += '.'+nextIndex;
+            if(isNaN(parseFloat(nextIndex))) accessor += '.'+nextIndex;
+            else accessor += '['+nextIndex+']';
             var res = false;
             try{
                 eval('if(!'+accessor+'){ res = true;}');
-            }catch(error){ console.log(['error', error]); }
-            if(res && keys.length > 0){
+            }catch(error){ 
+                //console.log(['error', error, accessor]); 
+            }if(res && keys.length > 0){
                 eval(accessor+' = {};') //if we aren't initialized, let's do that
             }
         }
@@ -88,6 +90,9 @@ Midas.Smarty = new Class({
     },
     //the disconnect in naming between the following two functions is insanity, sorry to pass on bad convention
     getTemplateVars : function(name){
+        return this.get_template_vars(name);
+    },
+    get_template_vars : function(name){
         return this.get(name);
     },
     assign : function(name, value){
@@ -709,9 +714,9 @@ Midas.SmartyLib = {
     output : function(value){
         if(console) {
             if(navigator.userAgent.toLowerCase().indexOf("applewebkit") != -1) {
-                console.log(value);
+                //console.log(value);
             } else {
-                console.log.apply(this,arguments);
+                //console.log.apply(this,arguments);
             }
         }
     },
@@ -886,9 +891,9 @@ if(!NodeList.prototype.each){
 if(!Element.diff){
     Element.implement({
         diff : function(node){
-            console.log(['diff', this, node]);
+            //console.log(['diff', this, node]);
             this.childNodes.each(function(child, index){
-                console.log(['node comp', child.sameAs(node.childNodes[index])]);
+                //console.log(['node comp', child.sameAs(node.childNodes[index])]);
             });
         }
     });
