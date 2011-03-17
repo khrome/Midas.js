@@ -111,12 +111,24 @@ Existing XML parsing techniques use DOM injection, which is very limited, can su
 
 So let's build a *real* toDOM function... one that parses the full HTML document and constructs a complete DOM tree independent of the window's document, so it's not subject to the quirks of legal tags at the point of injection.
 
-    var HTMLParser = new Class({
+    var XHTMLParser = new Class({
         Extends : Midas.SAXParser,
         stack : [],
-        root : false,
-        open : function(name, attrs){ // tag open
-            var node = new Element(name, attrs);
+        root : null,
+        scripts : [],
+        open : function(name, attrs){
+            var node;
+            if(name.indexOf(':') != -1){ //if this is one of FB's tags, we need to use innerHTML to get the correct tagName back out
+                var attributes = '';
+                for(key in attrs){
+                    attributes += key + '="'+attrs[key]+'" ';
+                }
+                node = new Element('div');
+                node.innerHTML = '<'+name+' '+attributes+'></'+name+'>';
+                node = node.children[0];
+            }else{
+                node = new Element(name, attrs);
+            }
             if(this.stack.length > 0) this.stack.getLast().appendChild(node);
             this.stack.push(node);
         },
@@ -125,15 +137,19 @@ So let's build a *real* toDOM function... one that parses the full HTML document
         },
         close : function(name){
             this.root = this.stack.pop();
+            if(name.toLowerCase() == 'script') this.scripts.push();
         },
         parse : function(html){
+            //wrap the script tag bodies with CDATA tags so our strict parser won't freak out
+            var exp = new RegExp('(<script\\b[^>]*>)([\\s\\S]*?)(<\\/script>)', 'igm');
+            html = html.replace(exp, '$1/*<![CDATA[*//*---->*/$2/*--*//*]]>*/$3');
             this.parent(html);
             return this.root;
         }
     });
     String.implement({
         toDOM: function(mode) {
-            var pageParser = new HTMLParser();
+            var pageParser = new XHTMLParser();
             return pageParser.parse(this);
         }
     });
