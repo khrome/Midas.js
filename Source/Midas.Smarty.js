@@ -25,8 +25,11 @@ Midas.Smarty = new Class({
     config : {},
     debug : false,
     caching : true,
+    runtimeCache : {},
     database : null,
-    initialize : function(){
+    initialize : function(options){
+        if(!options) options = {};
+        if(options.template_directory) this.template_directory = options.template_directory;
         //this.macroRegistry['panel'] = Midas.SmartyLib.renderPanel;
         this.macroRegistry['rdelim'] = function(panelName, attributes, smartyInstance, block){ return '}' };
         this.macroRegistry['ldelim'] = function(panelName, attributes, smartyInstance, block){ return '{' };
@@ -139,7 +142,12 @@ Midas.Smarty = new Class({
         if(this.macroRegistry[name]) return this.macroRegistry[name](attrs.get('name'), attrs, this, block);
         else return '<!-- '+name+' [Macro not found!] -->';
     },
-    getTemplate : function(name){
+    getTemplate : function(name, callback, immediate){
+        if(!immediate) immediate = false;
+        if(this.runtimeCache[name]){
+            callback(this.runtimeCache[name]);
+            return this.runtimeCache[name];
+        }
         var value = '';
         if(false){
             this.database.execute('SELECT * FROM templates where name = ?', { 
@@ -162,13 +170,16 @@ Midas.Smarty = new Class({
             }); 
         }
         if(value == ''){
+            var ob = this;
             var templateRequest = new Request({
                 url: name, 
                 method: 'get', 
-                async: false,
+                async: immediate,
                 noCache: true,
                 onSuccess: function(responseText, responseXML) {
                     value = this.response.text;
+                    ob.runtimeCache[name] = responseText;
+                    if(callback) callback(responseText);
                 }
             }).send();
         }
@@ -286,24 +297,25 @@ Midas.Smarty = new Class({
             }
         }.bind(this));
     },
-    fetch : function(templateName, callback){
-        var template;
-        if(templateName.indexOf("\n") == -1) template = this.getTemplate(this.template_directory + templateName);
-        else template = templateName;
-        var results = this.scan(template);
-        //parse tags (single level)
-        results.each(function(item, index){
-            switch(item.blockType){
-                case 'tag':
-                    item.tag = this.parseMacro(item.content);
-                    break;
-            }
-        }.bind(this));
-        this.nestBlocks(results);
-        this.renderOutput(results);
-        if(this.debug) this.output('['+templateName+']');
-        buffer = Midas.SmartyLib.executeBlocks(results, this);
-        if(callback) callback(buffer+'');
+    fetch : function(templateName, callback, immediate){
+        if(!immediate) immediate = false;
+        var buffer = '';
+        this.getTemplate(this.template_directory + templateName, function(template){
+            var results = this.scan(template);
+            //parse tags (single level)
+            results.each(function(item, index){
+                switch(item.blockType){
+                    case 'tag':
+                        item.tag = this.parseMacro(item.content);
+                        break;
+                }
+            }.bind(this));
+            this.nestBlocks(results);
+            this.renderOutput(results);
+            if(this.debug) this.output('['+templateName+']');
+            buffer = Midas.SmartyLib.executeBlocks(results, this);
+            if(callback) callback(buffer+'');
+        }.bind(this), immediate);
         return buffer+'';
     },
     blockStack : [],
