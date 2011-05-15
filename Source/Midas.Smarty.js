@@ -461,29 +461,63 @@ Midas.SmartyLib = {
     },
     evaluateSmartyPHPHybridBooleanExpression : function(expression, smartyInstance){
         //var pattern = /[Ii][Ff] +(\$[A-Za-z][A-Za-z0-9.]*) *$/s;
-        var pattern = new RegExp('[Ii][Ff] +(\$[A-Za-z][A-Za-z0-9.]*) *$', 'm');
-        var parts = expression.match(pattern);
-        if(parts && parts.length > 0){
-            return Midas.SmartyLib.evaluateSmartyPHPHybridVariable(parts[1].trim(), smartyInstance);
-        }
-        //pattern = /[Ii][Ff](.*)(eq|ne|gt|lt|ge|le|==|>=|<=|<|>)(.*)/s;
-        pattern = new RegExp('[Ii][Ff](.*)(eq|ne|gt|lt|ge|le|==|>=|<=|<|>)(.*)', 'm');
-        parts = expression.match(pattern);
-        if(parts && parts.length > 3){
-        var varOne = Midas.SmartyLib.evaluateSmartyPHPHybridVariable(parts[1].trim(), smartyInstance);
-        var varTwo = Midas.SmartyLib.evaluateSmartyPHPHybridVariable(parts[3].trim(), smartyInstance);
-        var res;
-            switch(parts[2]){
-                case '==':
-                case 'eq':
-                    res = (varOne == varTwo);
-                    break;
-                case '!=':
-                case 'ne':
-                    res = (varOne != varTwo);
-                    break;
+        expression = expression.trim();
+        if(expression.toLowerCase().substring(0, 2) == 'if'){
+            //todo: multilevel
+            expression = expression.substring(2).trim();
+            var expressions = expression.split('&&');
+            var value = true;
+            expressions.each(function(exp){
+                value = value && Midas.SmartyLib.evaluateSmartyPHPHybridBooleanExpression(exp, smartyInstance);
+            });
+            return value;
+        }else{
+            pattern = new RegExp('(.*)( eq| ne| gt| lt| ge| le|==|>=|<=|<|>)(.*)', 'm');
+            parts = expression.match(pattern);
+            if(parts && parts.length > 3){
+                var varOne = Midas.SmartyLib.evaluateSmartyPHPHybridVariable(parts[1].trim(), smartyInstance);
+                var varTwo = Midas.SmartyLib.evaluateSmartyPHPHybridVariable(parts[3].trim(), smartyInstance);
+                var res;
+                switch(parts[2]){
+                    case '==':
+                    case 'eq':
+                        res = (varOne == varTwo);
+                        break;
+                    case '!=':
+                    case 'ne':
+                        res = (varOne != varTwo);
+                        break;
+                    case '>':
+                    case 'gt':
+                        res = (varOne > varTwo);
+                        break;
+                    case '<':
+                    case 'lt':
+                        res = (varOne < varTwo);
+                        break;
+                    case '<=':
+                    case 'le':
+                        res = (varOne <= varTwo);
+                        break;
+                    case '>=':
+                    case 'ge':
+                        res = (varOne >= varTwo);
+                        break;
+                }
+                return res;
+            }else{
+                var res;
+                if( (expression - 0) == expression && expression.length > 0){ //isNumeric?
+                    res = eval(expression);
+                    res = res == 0;
+                }else if(expression == 'true' || expression == 'false'){ //boolean
+                    res = eval(expression);
+                }else{
+                    res = Midas.SmartyLib.evaluateSmartyPHPHybridVariable(expression, smartyInstance);
+                    res = (res != null && res != undefined && res != '' && res != false);
+                }
+                return res;
             }
-        return res;
         }
     },
     evaluateSmartyPHPHybridExpression : function(variableName, smartyInstance){ // this decodes a value that may be modified by functions using the '|' separator
@@ -634,7 +668,7 @@ Midas.SmartyLib = {
         return buffer;
     },
     forMacro: function(tag, smartyInstance, block){
-        var requiredAttrs = ['from', 'key'];
+        var requiredAttrs = ['from', 'item'];
         var buffer = '';
         if(this.requireAttrs(tag, requiredAttrs, smartyInstance)){
             var name;
@@ -649,6 +683,7 @@ Midas.SmartyLib = {
             var from = this.getAttr('from', tag.attrs);
             var to = this.getAttr('to', tag.attrs);
             var keyName = this.getAttr('key', tag.attrs);
+            if(!keyName) keyName = '__loop_key';
             var itemName = this.getAttr('item', tag.attrs);
             var collection = Midas.SmartyLib.evaluateSmartyPHPHybridVariable(from, smartyInstance);
             var collection_length = 0;
