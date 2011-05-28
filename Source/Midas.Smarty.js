@@ -27,6 +27,7 @@ Midas.Smarty = new Class({
     caching : true,
     runtimeCache : {},
     database : null,
+    cacheID : null,
     initialize : function(options){
         if(!options) options = {};
         if(options.template_directory) this.template_directory = options.template_directory;
@@ -50,6 +51,7 @@ Midas.Smarty = new Class({
             var value = Midas.SmartyLib.evaluateSmartyPHPHybridExpression(block.content, smartyInstance);
             return value;
         };
+        this.cacheID = Midas.SmartyLib.generateUUID();
         //if (this.caching) 
         //this.database = openDatabase('SmartyDB', "1.0", "Smarty Client Database", 200000);
         //this.database = new Database('SmartyDB'); 
@@ -144,9 +146,9 @@ Midas.Smarty = new Class({
     },
     getTemplate : function(name, callback, immediate){
         if(!immediate) immediate = false;
-        if(this.runtimeCache[name]){
-            callback(this.runtimeCache[name]);
-            return this.runtimeCache[name];
+        if(Midas.Smarty.runtimeCache[name]){
+            callback(Midas.Smarty.runtimeCache[name]);
+            return Midas.Smarty.runtimeCache[name];
         }
         var value = '';
         if(false){
@@ -170,17 +172,14 @@ Midas.Smarty = new Class({
             }); 
         }
         if(value == ''){
-            var ob = this;
             var templateRequest = new Request({
-                url: name, 
+                url: name+'?'+this.cacheID, 
                 method: 'get', 
                 async: immediate,
-                noCache: true,
                 onSuccess: function(responseText, responseXML) {
-                    value = this.response.text;
-                    ob.runtimeCache[name] = responseText;
+                    Midas.Smarty.runtimeCache[name] = responseText;
                     if(callback) callback(responseText);
-                }
+                }.bind(this)
             }).send();
         }
         this.value = value;
@@ -337,6 +336,7 @@ Midas.Smarty = new Class({
                     //console.log('attempting render of tag '+item.tag.name);
                     if(item.tag.name == 'value'){
                         item.output = Midas.SmartyLib.evaluateSmartyPHPHybridExpression(item.content, this);
+                        //console.log(['value:', item.content]);
                     }
                     if(item.blocks && item.blocks.length > 0){
                         this.renderOutput(item.blocks);
@@ -375,7 +375,7 @@ Midas.Smarty = new Class({
                     }
                     parts[parts.length-1].content += ch;
             }else if(inliteral){
-                if(ch == '{' && template.substring(lcv, lcv+10).toLowerCase() == '{/literal}'){ //we found a tag end
+                if(ch == '{' && template.substring(lcv, lcv+10).toLowerCase() == '{/literal}'){ //we found a literal tag end
                     lcv += 9; //we need to eat the literal tag
                     parts[parts.length] = {
                         blockType : 'text',
@@ -387,7 +387,7 @@ Midas.Smarty = new Class({
                 }
             }else if(intag){
                 if(incomment){
-                    if(ch == '*'){ //we found a tag end
+                    if(ch == '*'){ //we found a comment tag end
                         var count = 0
                         while(template.charAt(lcv+count+1) == ' ') count++;
                         if(template.charAt(lcv+count+1) == '}'){ //is the first non-whitespace char after the asterisk?
@@ -524,6 +524,7 @@ Midas.SmartyLib = {
         if(variableName === undefined) return null;
         var methods = variableName.splitHonoringQuotes('|', ['#']);
         methods.reverse();
+        //console.log(['expression-methods:', methods]);
         var accessor = methods.pop();
         var value = Midas.SmartyLib.evaluateSmartyPHPHybridVariable(accessor, smartyInstance);
         //now that we have the value, we must run it through the function stack we found
@@ -533,6 +534,7 @@ Midas.SmartyLib = {
         methods.each(function(item, index){
             params = item.split(':');
             params.reverse();
+            //console.log(['expression-item:', item]);
             method = params.pop(); //1st element is
             if(method == 'default'){
                 if(!value || value == '') value = Midas.SmartyLib.evaluateSmartyPHPHybridVariable(params[0], smartyInstance);
@@ -543,7 +545,7 @@ Midas.SmartyLib = {
         return value;
     },
     evaluateSmartyPHPHybridVariable : function(accessor, smartyInstance, isConf){
-        if(isConf == undefined || isConf == null) isConf = false;
+        if(isConf == 'undefined' || isConf == null) isConf = false;
         if(!accessor) return '';
         if(accessor.toLowerCase().startsWith('\'') && accessor.toLowerCase().endsWith('\'')) return accessor.substr(1, accessor.length-2);
         if(accessor.toLowerCase().startsWith('"') && accessor.toLowerCase().endsWith('"')) return accessor.substr(1, accessor.length-2);
@@ -570,11 +572,11 @@ Midas.SmartyLib = {
                 break;
             default:
                 currentValue = smartyInstance.get(currentPart);
-                if(currentValue == undefined ) currentValue = '';
+                if(currentValue == 'undefined' ) currentValue = '';
         }
         parts.each(function(item, index){
             if(!currentValue) return;
-            if(currentValue[item] == undefined){
+            if(currentValue[item] == 'undefined'){
                 currentValue = null;
             }else{
                 currentValue = currentValue[item];
@@ -655,9 +657,11 @@ Midas.SmartyLib = {
             if(smartyInstance.debug) smartyInstance.output('No blocks to execute!');
             return;
         }
-        //var ins = this.generateUUID();
-        //var count = 0;
+        var ins = this.generateUUID();
+        var count = 0;
         blocks.each(function(item, index){
+            if(typeOf(item) != 'object') return;
+            //console.log(['block-X['+item.blockType+']', item.content]);
             //console.log(['block-X['+ins+':'+(count++)+']', item, blocks, buffer]);
             if(item.tag){
                 buffer += smartyInstance.macro(item.tag.name, item.tag.attrs, item);
@@ -773,9 +777,11 @@ Midas.SmartyLib = {
         for(var lcv = 1; lcv < parts.length; lcv++){
             eval('value = '+parts[lcv]+'(value);');
         }
+        //console.log(['getval', expression, value]);
         return value;
     }
 };
+Midas.Smarty.runtimeCache = {};
 
 // Array extensions
 if(!Array.copy){
@@ -832,7 +838,7 @@ if(!String.splitHonoringQuotes){
                         //results[results.length-1] += this[lcv];
                         //results[results.length] = '';
                     }else{
-                        results[results.length-1] += this[lcv];
+                        results[results.length-1] += this.charAt(lcv);
                     }
                 }else{
                     if(quotes.contains(this[lcv])){
@@ -842,7 +848,7 @@ if(!String.splitHonoringQuotes){
                     }else if(this[lcv] == delimiter){
                         results[results.length] = '';
                     }else{
-                        results[results.length-1] += this[lcv];
+                        results[results.length-1] += this.charAt(lcv);
                     }
                 }
             }
