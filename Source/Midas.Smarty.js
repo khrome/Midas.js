@@ -882,15 +882,21 @@ var XHTMLParser = new Class({
         if(this.stack.length > 0) this.stack.getLast().appendText(text);
     },
     close : function(name){
+        //this.root = this.stack[0];
         this.root = this.stack.pop();
+        //if(this.root.tagName.toLowerCase() != name.toLowerCase()) throw(this.root.tagName+' != '+name);
         if(name.toLowerCase() == 'script') this.scripts.push();
     },
     parse : function(html){
         //wrap the script tag bodies with CDATA tags so our strict parser won't freak out
         var exp = new RegExp('(<script\\b[^>]*>)([\\s\\S]*?)(<\\/script>)', 'igm');
         html = html.replace(exp, '$1/*<![CDATA[*//*---->*/$2/*--*//*]]>*/$3');
-        this.parent(html);
-        return this.root;
+        this.parent('<xml>'+html+'</xml>');
+        var result = this.root.getChildren();
+        //don't ask
+        if(result[0] && result[0].tagName.toLowerCase() == 'html') return result[0];
+        if(this.stack[1]) return this.stack[1];
+        return this.root.getChildren();
     }
 });
 
@@ -929,7 +935,6 @@ if(!String.toDOM){
             }
             return result;
         }
-        
     });
 }
 
