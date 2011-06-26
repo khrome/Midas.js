@@ -178,8 +178,8 @@ Midas.Smarty = new Class({
                 async: immediate,
                 onSuccess: function(responseText, responseXML) {
                     Midas.Smarty.runtimeCache[name] = responseText;
-                    if(callback) callback(responseText);
-                }.bind(this)
+                    if(callback) callback(this.response.text);
+                }
             }).send();
         }
         this.value = value;
@@ -585,6 +585,7 @@ Midas.SmartyLib = {
         return currentValue;
     },
     executeMethod : function(name, value, params){
+        if(window[name] && typeOf(window[name]) == 'function') return window[name].apply(this, params);
         switch(name){
             case 'default':
                 if(value == null || value == ''){
@@ -594,6 +595,12 @@ Midas.SmartyLib = {
                     return value;
                 }
                 break;
+            case 'truncate':
+                var width = params[0]?Number.from(params[0]):80;
+                var trailer = params[1]?params[1]:'...';
+                //var fullWords = params[3] && (params[3].toLowerCase() == 't' || params[3].toLowerCase() == 'true')?true:false;
+                //var truncateInMiddle = = params[4] && (params[4].toLowerCase() == 't' || params[4].toLowerCase() == 'true')?true:false;
+                return width < value.length ? value.substr(0, width)+trailer:value;
             default:
                 //alert('|'+name+'||'+params.pop()+'|');
         }

@@ -1,0 +1,35 @@
+<html>
+    <head>
+        <script origin="midas" type="text/javascript" src="../Demo/mootools-core-1.3-full-nocompat.js"></script>
+        <script origin="midas" type="text/javascript" src="../Source/Midas.SAXParser.js"></script>
+        <script origin="midas" type="text/javascript" src="../Source/Midas.Smarty.js"></script>
+        <script origin="midas" type="text/javascript" src="php.min.js"></script>
+        <script>
+            var data = {
+                something : 'bladmsnfdsdjskjddsjkh',
+                anotherkey : 'argh',
+                collection : [
+                    {
+                        blah : 'blargh1',
+                        argh : 'ACK'
+                    },
+                    {
+                        blah : 'blargh2',
+                        argh : 'ACK'
+                    },
+                    {
+                        blah : 'blargh3',
+                        argh : 'ACK'
+                    }
+                ],
+            };
+            var smartyParser = new Midas.Smarty();
+            for(key in data) smartyParser.assign(key, data[key] );
+            smartyParser.fetch('test.tpl', function(html){
+                console.log(html);
+            });
+        </script>
+    </head>
+    <body>
+    </body>
+</html>
