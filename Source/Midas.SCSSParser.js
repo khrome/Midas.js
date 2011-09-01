@@ -54,7 +54,7 @@ Midas.SCSS = function(){
         });
     });
 }
-Midas.SCSS();
+//Midas.SCSS();
 Midas.SCSSParser = new Class({
     parse: function(text){
         var inComment = false;

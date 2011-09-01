@@ -89,7 +89,7 @@ Midas.Smarty = new Class({
         }else{
             var value = eval(expression);
             if(this.debug) Midas.SmartyLib.output(expression+' => '+value);
-            if (value) return value;
+            return value;
         }
 
     },
@@ -575,7 +575,7 @@ Midas.SmartyLib = {
                 if(currentValue == 'undefined' ) currentValue = '';
         }
         parts.each(function(item, index){
-            if(!currentValue) return;
+            if(!currentValue && currentValue !== 0) return;
             if(currentValue[item] == 'undefined'){
                 currentValue = null;
             }else{
@@ -945,6 +945,17 @@ if(!String.toDOM){
     });
 }
 
+if(!Element.traverse){
+    Element.implement({
+        traverse : function(nodeFunction){
+            nodeFunction(this);
+            this.getChildren().each(function(child){
+                child.traverse(nodeFunction);
+            });
+        }
+    });
+}
+
 if(!NodeList.prototype.each){
     NodeList.prototype.each = function(callback){
         for(index in this){
@@ -979,6 +990,61 @@ if(!Element.sameAs){
                 });
             }
             return !different;
+        }
+    });
+}
+
+if(!Function.actionTimeout) Function.actionTimeout = 16384;
+if(!Function.whenTrue){
+    Function.implement({
+        whenTrue : function(actionFunction, args, delayFunction, timeoutFunction, timeout, counter){
+            if(!timeout) timeout = Function.actionTimeout;
+            if(!counter) counter = 0;
+            if(!timeoutFunction) timeoutFunction = function(event){
+                throw('Condition not met after '+event.time+'ms');
+            };
+            var result = this();
+            if(!result){
+                var delayTime = Math.pow(2, counter); // geometric falloff
+                if(delayTime >= timeout){
+                    timeoutFunction({
+                        count : counter,
+                        time : delayTime
+                    });
+                    return;
+                }
+                counter++;
+                this.whenTrue.delay(delayTime, this, [actionFunction, args, delayFunction, timeoutFunction, timeout, counter]);
+                if(delayFunction) delayFunction({
+                    count : counter,
+                    time : delayTime
+                });
+            }else{
+                actionFunction.apply(this, args);
+            }
+        }
+    });
+}
+if(!String.whenIn){
+    String.implement({
+        whenIn : function(element, callback){
+            (function(){
+                return element.getElements(this.toString()).length > 0;
+            }.bind(this)).whenTrue(function(){
+                callback(element.getElements(this.toString())[0]);
+            }.bind(this));
+        }
+    });
+}
+if(!String.whenFullIn){
+    String.implement({
+        whenFullIn : function(element, callback){
+            (function(){
+                var q = element.getElements(this.toString());
+                return q.length > 0 && q[0].getChildren().length > 0;
+            }.bind(this)).whenTrue(function(){
+                callback(element.getElements(this.toString())[0]);
+            }.bind(this));
         }
     });
 }
