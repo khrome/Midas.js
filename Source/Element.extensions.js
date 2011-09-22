@@ -230,7 +230,7 @@ if(!Elements.mergedStyles){
 
 if(!Element.enlargeToFit){
     Element.implement({
-        enlargeToFit : function(element){
+        enlargeToFit : function(element, callback){
             if(this.dummy && this.src == this.dummy.src){
                 this.resizeToFit();
                 return;
@@ -259,10 +259,12 @@ if(!Element.enlargeToFit){
                             this.setStyle('width', thoseDim.x);
                         }
                     }
+                    if(callback) callback();
                 }.bind(this);
                 this.dummy.onload = this.resizeToFit;
             }
             this.dummy.src = this.src;
+
         }
     });
 }

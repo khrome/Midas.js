@@ -78,6 +78,35 @@ if(!Object.profile){
         }
     }
 }
+/*
+
+Object.expand(object, {
+    'source.user_id' : 'user_id'
+}, index);
+
+//*/
+
+
+if(!Object.expand){
+    Object.expand = function(ob, fields, indices){ 
+        Object.map(ob, function(value, key){
+            if(typeOf(value) == 'object' && typeOf(value) == 'array'){
+                //Object.traverse(value, fields, indices);
+                Object.expand(value, fields, indices);
+            }else{
+                if(fields.contains(key) && indices[key] && indices[key][value]){
+                    //inflate
+                    if(key.endsWith('_id')){
+                        key = key.substring(0, key.length-3);
+                    }else{
+                        key = key+'_object';
+                    }
+                    ob[key] = indices[key][value];
+                }
+            }
+        }, this);
+    }
+}
 
 /*if(!Object.watch){
     Object.implement({
